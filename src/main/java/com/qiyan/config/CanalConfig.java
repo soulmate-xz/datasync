@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 public class CanalConfig {
     private String hostname = "localhost";
     private Integer port = 11111;
-    private String destination="";
-    private String username="";
-    private String password="";
-    private String subscribe="";
+    private String destination = "";
+    private String username = "";
+    private String password = "";
+    private String subscribe = "";
 
     public CanalConfig(String destination, String subscribe) {
         this.destination = destination;

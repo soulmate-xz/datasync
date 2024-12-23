@@ -1,20 +1,23 @@
 package com.qiyan.manager;
 
-import com.alibaba.otter.canal.protocol.Message;
 import com.qiyan.config.MonitorConfig;
 import com.qiyan.schema.MessageData;
 import com.qiyan.thread.MessageHandleThread;
 import com.qiyan.thread.ReceiveMessageThread;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
-@Slf4j
 public class DBMonitorManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(DBMonitorManager.class);
 
     @Getter
     @Setter
@@ -41,10 +44,10 @@ public class DBMonitorManager {
 
     public void run() {
 
-        log.info("START MONITOR <" + id + "> .....");
+        logger.info("START MONITOR <" + id + "> .....");
         this.messageHandleThread.start();
         this.receiveMessageThread.start();
-        log.info("START MONITOR <" + id + "> SUCCESS");
+        logger.info("START MONITOR <" + id + "> SUCCESS");
     }
 
     public void addOtherMonitorMessageQueue(Queue<MessageData> otherMonitorMessageQueue) {

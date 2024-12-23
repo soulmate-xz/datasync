@@ -4,14 +4,16 @@ import com.qiyan.config.DBConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class DBManager {
 
     // HikariCP 数据源
     private final HikariDataSource dataSource;
 
-    public DBManager (DBConfig dbConfig) {
+    public DBManager(DBConfig dbConfig) {
         HikariConfig config = new HikariConfig();
         String URL = "jdbc:mysql://" + dbConfig.getHostname() + ":" + dbConfig.getPort() + "/" + dbConfig.getDatabase();
         config.setJdbcUrl(URL);

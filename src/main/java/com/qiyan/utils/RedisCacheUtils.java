@@ -1,21 +1,24 @@
 package com.qiyan.utils;
 
 import com.qiyan.config.RedisConfig;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 
-@Slf4j
 public final class RedisCacheUtils {
     private final static Jedis jedis;
 
+    private static final Logger logger = LoggerFactory.getLogger(RedisCacheUtils.class);
+
     // 构造函数，初始化 Redis 连接并指定 dbName
-     static  {
-         RedisConfig config = ParseConfigUtils.getRedisConfig();
+    static {
+        RedisConfig config = ParseConfigUtils.getRedisConfig();
         jedis = new Jedis(config.getHostname(), config.getPort());
-        log.info("初始化缓存成功!!!");
+        logger.info("初始化缓存成功!!!");
 
     }
+
     // 设置键值并指定过期时间（单位：秒）
     public static void set(String key, String value, int expirationSeconds) {
         jedis.set(key, value);
@@ -26,9 +29,9 @@ public final class RedisCacheUtils {
 
     // 设置键值并指定过期时间（单位：秒）
     public static void set(String key, String value) {
-        log.debug("set: " +  key + "=" + value);
+        logger.debug("set: " + key + "=" + value);
         jedis.set(key, value);
-        int expirationSeconds = 60 * 5;
+        long expirationSeconds = 60L * 5L;
         jedis.expire(key, expirationSeconds);
     }
 

@@ -5,14 +5,16 @@ import com.qiyan.ErrorRecord;
 import com.qiyan.config.AlarmPushConfig;
 import com.qiyan.utils.HttpClientUtil;
 import com.qiyan.utils.ParseConfigUtils;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@Slf4j
 public class AlarmPushThread extends Thread {
+
+    private static final Logger logger = LoggerFactory.getLogger(AlarmPushThread.class);
 
     private final ErrorRecord errorRecord;
 
@@ -37,6 +39,7 @@ public class AlarmPushThread extends Thread {
               ```
                         
             """;
+
     @Override
     public void run() {
         send(this.errorRecord);
@@ -45,21 +48,20 @@ public class AlarmPushThread extends Thread {
     public void send(ErrorRecord errorRecord) {
         AlarmPushConfig alarmPushConfig = ParseConfigUtils.getAlarmPushConfig();
         if (Objects.isNull(alarmPushConfig)) {
-            log.info("无报警推送配置!!!");
+            logger.info("无报警推送配置!!!");
             return;
         }
         String content = template.replace("monitorId", errorRecord.getMonitorId())
-                .replace("sqlInfo", errorRecord.getSql())
+                .replace("sqlInfo", errorRecord.getSqlInfo())
                 .replace("exception", errorRecord.getException());
         Map<String, Object> body = new HashMap<>();
         Map<String, String> commonVO = new HashMap<>();
         body.put("content", content);
         commonVO.put("msgType", "markdown");
-        for (String userId: alarmPushConfig.getUserIds()) {
+        for (String userId : alarmPushConfig.getUserIds()) {
             commonVO.put("toUser", userId);
             body.put("commonVO", commonVO);
             HttpClientUtil.post(alarmPushConfig.getUrl(), body);
         }
-
     }
 }

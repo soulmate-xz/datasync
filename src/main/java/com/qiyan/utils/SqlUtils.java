@@ -35,6 +35,7 @@ public final class SqlUtils {
         sql.setLength(sql.length() - 2); // Remove last comma
 
         for (CanalEntry.Column column : beforeColumns) {
+            System.out.println(column.getName() + "=" + column.getValue());
             if (column.getIsKey()) { // Assuming the key is marked
                 whereClause += column.getName() + " = '" + column.getValue() + "' AND ";
             }

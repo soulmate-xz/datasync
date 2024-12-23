@@ -26,7 +26,7 @@ public class DBConfig {
 
     @Override
     public String toString() {
-        return  hostname + ":" + port
+        return hostname + ":" + port
                 + "?database=" + database + ";"
                 + "?username=" + username + ";"
                 + "?maximumPoolSize=" + maximumPoolSize + ";"

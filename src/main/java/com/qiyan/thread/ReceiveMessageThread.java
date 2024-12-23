@@ -8,16 +8,17 @@ import com.qiyan.Daemon;
 import com.qiyan.ErrorRecord;
 import com.qiyan.config.CanalConfig;
 import com.qiyan.schema.MessageData;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Queue;
 
 
-@Slf4j
 public class ReceiveMessageThread extends Thread {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReceiveMessageThread.class);
 
     private final String monitorId;
 
@@ -43,7 +44,7 @@ public class ReceiveMessageThread extends Thread {
                 canalConfig.getPassword()
         );
         try {
-            log.info("MONITOR <" + monitorId + "> 开启日志监听...");
+            logger.info("MONITOR <" + monitorId + "> 开启日志监听...");
             int errorCount = 0;
             while (Daemon.getRunning()) {
                 try {
@@ -52,8 +53,8 @@ public class ReceiveMessageThread extends Thread {
                     Message message = canalConnector.get(100);
                     errorCount = 0;
                     if (!message.getEntries().isEmpty()) {
-                        log.info("MONITOR <" + monitorId + "> 收到数据库BinLog日志;");
-                        for (Queue<MessageData> queue: otherMonitorMessageQueue) {
+                        logger.info("MONITOR <" + monitorId + "> 收到数据库BinLog日志;");
+                        for (Queue<MessageData> queue : otherMonitorMessageQueue) {
                             MessageData messageData = new MessageData(message, monitorId);
                             queue.add(messageData);
                         }
@@ -61,13 +62,18 @@ public class ReceiveMessageThread extends Thread {
                 } catch (CanalClientException exception) {
                     ErrorRecord record = ErrorRecord.builder()
                             .monitorId(monitorId)
-                            .sql("")
+                            .sqlInfo("canal 连接异常")
                             .exception(exception.toString()).build().save();
                     new AlarmPushThread(record).start();
                     errorCount += 1;
                     if (errorCount >= 5) {  // 5次都连不上canal退出程序
                         Daemon.setRunning(false);
-                        log.error("canal 连接失败!!! 退出程序!!!");
+                        logger.error("canal 连接失败!!! 退出程序!!!");
+                        record = ErrorRecord.builder()
+                                .monitorId(monitorId)
+                                .sqlInfo("canal 连接异常")
+                                .exception("canal 连接失败, 程序自动退出!!!").build().save();
+                        new AlarmPushThread(record).start();
                     }
                     Thread.sleep(1000L * 5 * errorCount);
                 }

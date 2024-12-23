@@ -5,8 +5,6 @@ import com.qiyan.config.DBConfig;
 import com.qiyan.config.MonitorConfig;
 import com.qiyan.manager.DBMonitorManager;
 import com.qiyan.utils.ParseConfigUtils;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;

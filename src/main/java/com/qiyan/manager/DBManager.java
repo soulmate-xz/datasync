@@ -24,6 +24,7 @@ public class DBManager {
         config.setIdleTimeout(dbConfig.getIdleTimeout()); // 空闲超时时间
         config.setConnectionTimeout(dbConfig.getConnectionTimeout()); // 连接超时时间
         config.setLeakDetectionThreshold(dbConfig.getLeakDetectionThreshold()); // 泄漏检测阈值
+        config.setMaxLifetime(180000L);
 
         System.setProperty("com.zaxxer.hikari.level", "INFO");
         this.dataSource = new HikariDataSource(config);

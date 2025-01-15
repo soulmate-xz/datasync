@@ -37,6 +37,8 @@ build/
 ### Mac OS ###
 .DS_Store
 
-config.json
 /test
 /logs
+config*.json
+datasync.service
+canal.service

@@ -1,0 +1,26 @@
+[Unit]
+Description=Canal
+After=network.target
+
+[Service]
+# 运行用户和组，建议非 root 用户
+User=root
+Group=root
+
+# 执行脚本的路径
+ExecStart=/bin/bash /root/soft/canal/bin/startup.sh
+
+# 停止脚本
+ExecStop=/bin/bash /root/soft/canal/bin/stop.sh
+
+# 重载脚本（可选，通常用于配置更新）
+ExecReload=/bin/bash /root/soft/canal/bin/restart.sh
+
+# 可选配置：设置工作目录（如果脚本依赖特定路径）
+WorkingDirectory=/root/soft/canal/bin
+
+# 自动重启策略
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 
 public class ReceiveMessageThread extends Thread {
@@ -22,12 +23,12 @@ public class ReceiveMessageThread extends Thread {
 
     private final String monitorId;
 
-    private final List<Queue<MessageData>> otherMonitorMessageQueue;
+    private final List<BlockingQueue<MessageData>> otherMonitorMessageQueue;
     private final CanalConfig canalConfig;
 
     public ReceiveMessageThread(
             String monitorId,
-            List<Queue<MessageData>> otherMonitorMessageQueue,
+            List<BlockingQueue<MessageData>> otherMonitorMessageQueue,
             CanalConfig canalConfig
     ) {
         this.monitorId = monitorId;
@@ -56,6 +57,7 @@ public class ReceiveMessageThread extends Thread {
                         logger.info("MONITOR <" + monitorId + "> 收到数据库BinLog日志;");
                         for (Queue<MessageData> queue : otherMonitorMessageQueue) {
                             MessageData messageData = new MessageData(message, monitorId);
+                            logger.info("发送消息至消息队列");
                             queue.add(messageData);
                         }
                     }

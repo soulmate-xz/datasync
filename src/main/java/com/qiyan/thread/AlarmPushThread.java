@@ -30,7 +30,7 @@ public class AlarmPushThread extends Thread {
                         
               ```
               	sqlInfo
-            	```
+              ```
                         
             - 错误信息
                         
@@ -48,7 +48,7 @@ public class AlarmPushThread extends Thread {
     public void send(ErrorRecord errorRecord) {
         AlarmPushConfig alarmPushConfig = ParseConfigUtils.getAlarmPushConfig();
         if (Objects.isNull(alarmPushConfig)) {
-            logger.info("无报警推送配置!!!");
+            logger.debug("无报警推送配置!!!");
             return;
         }
         String content = template.replace("monitorId", errorRecord.getMonitorId())

@@ -5,13 +5,14 @@ import com.qiyan.config.DBConfig;
 import com.qiyan.config.MonitorConfig;
 import com.qiyan.manager.DBMonitorManager;
 import com.qiyan.utils.ParseConfigUtils;
+import com.qiyan.utils.RedisCacheUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Starter {
 
-    public void run() {
+    public void runForever() {
         List<MonitorConfig> configs = ParseConfigUtils.getMonitorConfigs();
         List<DBMonitorManager> managers = new ArrayList<>();
 
@@ -30,6 +31,18 @@ public class Starter {
         for (DBMonitorManager monitorManager : managers) {
             monitorManager.run();
         }
+        while (Daemon.getRunning()) {
+            for (DBMonitorManager manager : managers) {
+                manager.checkAlive();
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        RedisCacheUtils.close();
+        System.out.println("执行完毕");
 
     }
 

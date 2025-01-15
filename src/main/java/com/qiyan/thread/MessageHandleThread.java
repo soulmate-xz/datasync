@@ -21,20 +21,20 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 
 public class MessageHandleThread extends Thread {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageHandleThread.class);
 
-    private final Queue<MessageData> messageQueue;
+    private final BlockingQueue<MessageData> messageQueue;
     private final String monitorId;
     @Getter
     private final DBConfig dbConfig;
     private final DBManager dbManager;
 
-    public MessageHandleThread(String monitorId, Queue<MessageData> messageQueue, DBConfig dbConfig) {
+    public MessageHandleThread(String monitorId, BlockingQueue<MessageData> messageQueue, DBConfig dbConfig) {
         this.monitorId = monitorId;
         this.messageQueue = messageQueue;
         this.dbConfig = dbConfig;
@@ -45,25 +45,25 @@ public class MessageHandleThread extends Thread {
     public void run() {
         logger.info("MONITOR <" + monitorId + "> 开启消息监听...");
         while (Daemon.getRunning()) {
-            if (!messageQueue.isEmpty()) {
-                MessageData messageData = messageQueue.poll();
+            try {
+                MessageData messageData = messageQueue.take();
                 Message message = messageData.getMessage();
                 logger.info("MONITOR <" + monitorId + "> 收到消息;");
                 List<CanalEntry.Entry> entryList = message.getEntries();
                 if (!entryList.isEmpty()) {
+                    logger.debug("消息长度: " + entryList.size());
                     for (CanalEntry.Entry entry : entryList) {
                         CanalEntry.EntryType entryType = entry.getEntryType();
                         if (entryType.equals(CanalEntry.EntryType.ROWDATA)) {
                             String tableName = entry.getHeader().getTableName();
+                            logger.debug("数据表名: " + tableName);
                             ByteString storeValue = entry.getStoreValue();
                             String sql = "";
                             try {
                                 CanalEntry.RowChange rowChange = CanalEntry.RowChange.parseFrom(storeValue);
                                 CanalEntry.EventType eventType = rowChange.getEventType();
                                 List<CanalEntry.RowData> rowDataList = rowChange.getRowDatasList();
-                                Connection connection;
-                                try {
-                                    connection = dbManager.getConnection();
+                                try (Connection connection = dbManager.getConnection()) {
                                     dbManager.beginTransaction(connection);
                                     try {
                                         for (CanalEntry.RowData rowData : rowDataList) {
@@ -74,10 +74,11 @@ public class MessageHandleThread extends Thread {
                                                         sql = SqlUtils.buildUpdateSql(tableName, rowData.getBeforeColumnsList(), rowData.getAfterColumnsList());
                                                 case DELETE ->
                                                         sql = SqlUtils.buildDeleteSql(tableName, rowData.getBeforeColumnsList());
+                                                case TRUNCATE -> sql = "truncate table " + tableName;
                                                 default -> {
                                                 }
                                             }
-                                            logger.info("MONITOR <" + monitorId + "> 解析到sql: " + sql);
+                                            logger.debug("MONITOR <" + monitorId + "> 解析到sql: " + sql);
                                             RedisCacheUtils.set(buildSqlKey(sql, messageData.getSendMonitorId()), "1");  // 防止重复执行
                                             if (!sql.equals("")) {
                                                 String cacheKey = buildSqlKey(sql);
@@ -85,20 +86,18 @@ public class MessageHandleThread extends Thread {
                                                 if (Objects.isNull(cache)) {
                                                     dbManager.executeUpdate(connection, sql);
                                                     RedisCacheUtils.set(cacheKey, "1");
-                                                    logger.info("MONITOR <" + monitorId + "> 执行sql: " + sql);
+                                                    logger.debug("MONITOR <" + monitorId + "> 执行sql: " + sql);
                                                 } else {
-                                                    logger.info("MONITOR <" + monitorId + "> 收到重复sql: " + sql);
+                                                    logger.debug("MONITOR <" + monitorId + "> 收到重复sql: " + sql);
                                                 }
                                             }
                                         }
                                         dbManager.commitTransaction(connection);
                                         logger.info("MONITOR <" + monitorId + "> 提交事务");
-                                        connection.close();
                                     } catch (SQLException sqlException) {
-                                        logger.error("MONITOR <" + monitorId + "> message handle sql执行异常");
+                                        logger.error("MONITOR <" + monitorId + "> message handle sql执行异常: " + sqlException);
                                         sqlException.printStackTrace();
                                         dbManager.rollbackTransaction(connection);
-                                        connection.close();
                                         ErrorRecord record = ErrorRecord.builder().monitorId(monitorId).sqlInfo(sql).exception(sqlException.toString()).build().save();
                                         new AlarmPushThread(record).start();
                                     }
@@ -117,6 +116,11 @@ public class MessageHandleThread extends Thread {
                         }
                     }
                 }
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+                logger.error("消费日志时被中断!!!", interruptedException);
+            } catch (Exception exception) {
+                logger.error("未知的异常: " + exception);
             }
         }
     }

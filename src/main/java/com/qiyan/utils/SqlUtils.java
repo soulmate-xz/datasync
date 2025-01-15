@@ -13,7 +13,7 @@ public final class SqlUtils {
 
         for (CanalEntry.Column column : columns) {
             sql.append(column.getName()).append(", ");
-            values.append("'").append(column.getValue()).append("', ");
+            values.append(formatValue(column)).append(", ");
         }
 
         sql.setLength(sql.length() - 2);
@@ -25,24 +25,22 @@ public final class SqlUtils {
 
     public static String buildUpdateSql(String table, List<CanalEntry.Column> beforeColumns, List<CanalEntry.Column> afterColumns) {
         StringBuilder sql = new StringBuilder("UPDATE " + table + " SET ");
-        String whereClause = "";
+        StringBuilder whereClause = new StringBuilder();
 
         for (CanalEntry.Column column : afterColumns) {
-            // TODO: 2024/12/17 需要判断字段类型, 判断是否需要添加"'"(引号)
-            sql.append(column.getName()).append(" = '").append(column.getValue()).append("', ");
+            sql.append(column.getName()).append(" = ").append(formatValue(column)).append(", ");
         }
 
         sql.setLength(sql.length() - 2); // Remove last comma
 
         for (CanalEntry.Column column : beforeColumns) {
-            System.out.println(column.getName() + "=" + column.getValue());
             if (column.getIsKey()) { // Assuming the key is marked
-                whereClause += column.getName() + " = '" + column.getValue() + "' AND ";
+                whereClause.append(column.getName()).append(" = ").append(formatValue(column)).append(" AND ");
             }
         }
 
-        if (!whereClause.isEmpty()) {
-            whereClause = whereClause.substring(0, whereClause.length() - 5); // Remove last ' AND '
+        if (whereClause.length() > 0) {
+            whereClause = new StringBuilder(whereClause.substring(0, whereClause.length() - 5)); // Remove last ' AND '
             sql.append(" WHERE ").append(whereClause).append(";");
         }
 
@@ -54,7 +52,7 @@ public final class SqlUtils {
 
         for (CanalEntry.Column column : columns) {
             if (column.getIsKey()) {
-                sql.append(column.getName()).append(" = '").append(column.getValue()).append("' AND ");
+                sql.append(column.getName()).append(" = ").append(formatValue(column)).append(" AND ");
             }
         }
 
@@ -64,4 +62,14 @@ public final class SqlUtils {
         return sql.toString();
     }
 
+    public static String formatValue(CanalEntry.Column column) {
+        if (column.getValue().equals("")) {
+            return "NULL";
+        } else {
+            return switch (column.getMysqlType().split("\\(")[0]) {
+                case "tinyint", "smallint", "mediumint", "int", "bigint", "bit", "float", "double", "decimal" -> column.getValue();
+                default -> "'" + column.getValue() + "'";
+            };
+        }
+    }
 }

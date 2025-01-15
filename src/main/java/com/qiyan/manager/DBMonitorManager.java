@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class DBMonitorManager {
@@ -28,12 +28,12 @@ public class DBMonitorManager {
     private MonitorConfig monitorConfig;
 
     @Getter
-    private final Queue<MessageData> messageQueue = new ConcurrentLinkedQueue<>();
+    private final BlockingQueue<MessageData> messageQueue = new LinkedBlockingQueue<>();
 
-    private final List<Queue<MessageData>> otherMonitorMessageQueue = new ArrayList<>();
+    private final List<BlockingQueue<MessageData>> otherMonitorMessageQueue = new ArrayList<>();
 
-    private final MessageHandleThread messageHandleThread;
-    private final ReceiveMessageThread receiveMessageThread;
+    private MessageHandleThread messageHandleThread;
+    private ReceiveMessageThread receiveMessageThread;
 
     public DBMonitorManager(MonitorConfig monitorConfig) {
         this.monitorConfig = monitorConfig;
@@ -50,7 +50,7 @@ public class DBMonitorManager {
         logger.info("START MONITOR <" + id + "> SUCCESS");
     }
 
-    public void addOtherMonitorMessageQueue(Queue<MessageData> otherMonitorMessageQueue) {
+    public void addOtherMonitorMessageQueue(BlockingQueue<MessageData> otherMonitorMessageQueue) {
         this.otherMonitorMessageQueue.add(otherMonitorMessageQueue);
     }
 
@@ -60,5 +60,20 @@ public class DBMonitorManager {
             return this.id.equals(((DBMonitorManager) obj).getId());
         }
         return super.equals(obj);
+    }
+
+    public void checkAlive() {
+        if (!this.messageHandleThread.isAlive()) {
+            logger.error("Monitor <" + this.id + "> === MessageHandleThread 异常停止,正在重启");
+            this.messageHandleThread = new MessageHandleThread(id, messageQueue, this.monitorConfig.getDbConfig());
+            this.messageHandleThread.start();
+            logger.error("Monitor <" + this.id + "> === MessageHandleThread 重启成功");
+        }
+        if (!this.receiveMessageThread.isAlive()) {
+            logger.error("Monitor <" + this.id + "> === ReceiveMessageThread 异常停止,正在重启");
+            this.receiveMessageThread = new ReceiveMessageThread(id, otherMonitorMessageQueue, this.monitorConfig.getCanalConfig());
+            this.receiveMessageThread.start();
+            logger.error("Monitor <" + this.id + "> === ReceiveMessageThread 重启成功");
+        }
     }
 }

@@ -1,0 +1,23 @@
+[Unit]
+Description=数据同步
+After=network.target
+
+[Service]
+# 运行用户和组，建议非 root 用户
+User=root
+Group=root
+
+# JAR 文件路径
+ExecStart=/usr/local/bin/java17 -jar /root/project/datasync/datasync.jar
+
+# 可选配置：设置工作目录（如果需要）
+WorkingDirectory=/root/project/datasync/
+
+# 可选配置：设置环境变量
+Environment="JAVA_OPTS=-Xms256m -Xmx512m"
+
+# 自动重启策略
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -28,22 +28,22 @@ public class ErrorRecord {
     private static final Logger logger = LoggerFactory.getLogger(ErrorRecord.class);
 
     public ErrorRecord save() {
-        DataSourceConfig dataSourceConfig = ParseConfigUtils.getDataSourceConfig();
-        String url = "jdbc:mysql://"
-                + dataSourceConfig.getHostname() + ":"
-                + dataSourceConfig.getPort() + "/"
-                + dataSourceConfig.getDatabase();
-        try {
-            Connection connection = DriverManager.getConnection(url, dataSourceConfig.getUsername(), dataSourceConfig.getPassword());
-            String sql = "INSERT INTO material_data_sync_error_record(monitor_id, exception, sql_info) VALUES(?, ?, ?)";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            setParameters(preparedStatement, this.monitorId, this.exception, this.sqlInfo);
-            logger.error("保存错误信息: " + preparedStatement);
+//        DataSourceConfig dataSourceConfig = ParseConfigUtils.getDataSourceConfig();
+//        String url = "jdbc:mysql://"
+//                + dataSourceConfig.getHostname() + ":"
+//                + dataSourceConfig.getPort() + "/"
+//                + dataSourceConfig.getDatabase();
+//        try {
+//            Connection connection = DriverManager.getConnection(url, dataSourceConfig.getUsername(), dataSourceConfig.getPassword());
+//            String sql = "INSERT INTO material_data_sync_error_record(monitor_id, exception, sql_info) VALUES(?, ?, ?)";
+//            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+//            setParameters(preparedStatement, this.monitorId, this.exception, this.sqlInfo);
+//            logger.error("保存错误信息: " + preparedStatement);
 //            preparedStatement.executeUpdate();  // todo: 此处保存错误的sql会失败
-        } catch (SQLException sqlException) {
-            sqlException.printStackTrace();
-            logger.error("保存异常信息错误: " + sqlException);
-        }
+//        } catch (SQLException sqlException) {
+//            sqlException.printStackTrace();
+//            logger.error("保存异常信息错误: " + sqlException);
+//        }
         return this;
     }
 

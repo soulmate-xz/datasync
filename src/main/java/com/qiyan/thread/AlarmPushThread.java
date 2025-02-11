@@ -22,23 +22,7 @@ public class AlarmPushThread extends Thread {
         this.errorRecord = errorRecord;
     }
 
-    private static final String template = """
-            # 数据同步程序异常,请暂停使用并检查!!!!!
-                        
-            - 异常节点:  monitorId
-            - 异常信息
-                        
-              ```
-              	sqlInfo
-              ```
-                        
-            - 错误信息
-                        
-              ```
-              	exception
-              ```
-                        
-            """;
+    private static final String template = "# 数据同步程序异常,请暂停使用并检查!!!!!\n# 异常节点:  monitorId\n# 异常信息\n```\nsqlInfo\n```\n# 错误信息\n```\nexception\n```\n";
 
     @Override
     public void run() {
